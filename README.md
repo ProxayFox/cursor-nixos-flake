@@ -2,6 +2,8 @@
 
 A clean, simple NixOS flake for packaging the [Cursor](https://cursor.sh/) AI-powered code editor.
 
+## Auto checks for updates every day
+
 ## 📦 What This Flake Provides
 
 This flake packages Cursor as a Nix package that can be easily integrated into any NixOS system or used standalone.
