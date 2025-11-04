@@ -28,18 +28,13 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
       
-      - name: Install dependencies
-        run: |
-          nix-env -iA nixpkgs.curl
-          nix-env -iA nixpkgs.htmlq
-          nix-env -iA nixpkgs.ripgrep
-      
       - name: Run update script
         id: update
         continue-on-error: true
         run: |
           chmod +x update-cursor.sh
-          ./update-cursor.sh
+          # Run the script in a nix shell with all required dependencies
+          nix shell nixpkgs#curl nixpkgs#htmlq nixpkgs#ripgrep --command ./update-cursor.sh
       
       - name: Check for changes
         id: check_changes
