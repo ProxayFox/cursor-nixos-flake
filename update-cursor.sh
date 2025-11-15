@@ -22,7 +22,7 @@ print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 check_deps() {
     print_info "Checking for required tools..."
     local missing=0
-    for tool in curl htmlq rg nix-prefetch-url sed grep; do
+    for tool in curl nix-prefetch-url sed grep; do
         if ! command -v "$tool" &> /dev/null; then
             print_error "Required tool '$tool' is not installed."
             missing=1
@@ -31,7 +31,7 @@ check_deps() {
 
     if [[ "$missing" -eq 1 ]]; then
         print_error "Please install missing tools to continue."
-        print_info "You may be able to install them with: nix-shell -p curl htmlq ripgrep nix"
+        print_info "You may be able to install them with: nix-shell -p curl nix"
         exit 1
     fi
     print_success "All required tools found."
@@ -52,7 +52,7 @@ echo ""
 # 3. GET CURRENT VALUES
 # ------------------------------------------------
 CURRENT_VERSION=$(grep -o 'version = "[^"]*"' flake.nix | head -1 | sed 's/version = "//;s/"//')
-CURRENT_URL=$(grep -o 'https://downloads\.cursor\.com/[^"]*' flake.nix | head -1)
+CURRENT_URL=$(grep -o 'https://downloads[.]cursor[.]com/[^"]*' flake.nix | head -1)
 CURRENT_HASH=$(grep -o 'sha256 = "[^"]*"' flake.nix | head -1 | sed 's/sha256 = "//;s/"//')
 
 print_info "Current version: ${CURRENT_VERSION:-unknown}"
@@ -63,15 +63,26 @@ echo ""
 # ------------------------------------------------
 print_info "Finding latest AppImage URL from https://cursor.com/download..."
 
-# Use the command from our previous conversation to find the link
-NEW_URL=$(curl -s https://cursor.com/download | \
-          htmlq --attribute href a | \
-          rg "https://downloads.cursor.com/production/[^/]+/linux/x64/Cursor-[^/]+-x86_64.AppImage" | \
-          head -n 1) # Take the first match just in case
+# The download page now uses API URLs that redirect to the actual AppImage
+# First, get the API URL from the download page
+API_URL=$(curl -s https://cursor.com/download | \
+          grep -o 'https://api2.cursor.sh/updates/download/golden/linux-x64/cursor/[^"]*' | \
+          head -n 1)
+
+if [[ -z "$API_URL" ]]; then
+    print_error "Could not find API download URL on the download page."
+    print_error "The website structure may have changed."
+    exit 1
+fi
+
+print_info "Found API URL: $API_URL"
+
+# Follow the redirect to get the actual AppImage URL with version number
+NEW_URL=$(curl -sIL "$API_URL" | grep -i "^location:" | tail -n 1 | sed 's/location: //i' | tr -d '\r\n')
 
 if [[ -z "$NEW_URL" ]]; then
-    print_error "Could not automatically find a new download URL."
-    print_error "The website structure may have changed or the regex is no longer valid."
+    print_error "Could not follow redirect to find actual AppImage URL."
+    print_error "The API endpoint may have changed."
     exit 1
 fi
 

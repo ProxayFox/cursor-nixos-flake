@@ -9,10 +9,12 @@ A clean, simple NixOS flake for packaging the [Cursor](https://cursor.sh/) AI-po
 This flake packages Cursor as a Nix package that can be easily integrated into any NixOS system or used standalone.
 
 **Packages:**
+
 - `packages.x86_64-linux.cursor` - The Cursor editor with full desktop integration
 - `packages.x86_64-linux.default` - Same as cursor (default package)
 
 **Features:**
+
 - ✅ **Complete Desktop Integration** - Includes icon extraction and desktop entry
 - ✅ **Icon Support** - Automatically extracts and installs Cursor icon from AppImage
 - ✅ **MIME Type Associations** - Supports opening various file types with Cursor
@@ -83,23 +85,27 @@ nix run .#cursor
 When a new version of Cursor is released, use the included update script:
 
 ### Method 1: Automatic with URL
+
 ```bash
 ./update-cursor.sh "https://downloads.cursor.com/production/[hash]/linux/x64/Cursor-1.6.0-x86_64.AppImage"
 ```
 
 ### Method 2: Interactive
+
 ```bash
 ./update-cursor.sh
 # Follow the prompts to enter version or URL
 ```
 
 ### Method 3: Version number
+
 ```bash
 ./update-cursor.sh "1.6.0"
 # Script will prompt for the full download URL
 ```
 
 The script will automatically:
+
 - ✅ Update the version in `flake.nix`
 - ✅ Update the download URL
 - ✅ Fetch and update the SHA256 hash
@@ -109,7 +115,7 @@ The script will automatically:
 
 ## 📁 Repository Structure
 
-```
+```text
 cursor-flake/
 ├── flake.nix              # Main flake configuration (package-only)
 ├── flake.lock             # Flake lock file
@@ -144,9 +150,11 @@ If you prefer to update manually:
 1. Get the new AppImage URL from [cursor.sh](https://cursor.sh)
 2. Update version and URL in `flake.nix`
 3. Get the new hash:
+
    ```bash
    nix-prefetch-url "https://downloads.cursor.com/production/[hash]/linux/x64/Cursor-X.Y.Z-x86_64.AppImage"
    ```
+
 4. Update the hash in `flake.nix`
 5. Test: `nix build .#cursor`
 
@@ -168,6 +176,7 @@ This flake uses `appimageTools.extract` and `appimageTools.wrapType2` to properl
 This flake was simplified from a previous version that included full NixOS system configurations. The old structure has been archived in `archive-old-system-configs/` for reference.
 
 **Benefits of the new structure:**
+
 - ✅ **Focused**: Just packages Cursor, nothing else
 - ✅ **Reusable**: Easy to integrate into any NixOS system
 - ✅ **Maintainable**: No complex system configurations to maintain
