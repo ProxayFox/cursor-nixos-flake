@@ -1,0 +1,96 @@
+name: Update Nix Flake Inputs
+
+on:
+  # Run weekly on Monday at 3 AM UTC (after the daily Cursor update)
+  schedule:
+    - cron: '0 3 * * 1'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-flake-inputs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Ensure we have the latest changes (important if cursor was just updated)
+          ref: main
+      
+      - name: Install Nix
+        uses: cachix/install-nix-action@v25
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      
+      - name: Update flake inputs
+        id: update
+        run: |
+          echo "Updating flake inputs..."
+          nix flake update
+          
+          # Check if there are any changes
+          if git diff --quiet flake.lock; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No updates available"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Updates found in flake.lock"
+          fi
+      
+      - name: Test build after update
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          echo "Testing build with updated inputs..."
+          nix build .#cursor --no-link
+          echo "Build test successful!"
+      
+      - name: Get nixpkgs version info
+        id: version_info
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          # Extract nixpkgs revision from flake.lock
+          NIXPKGS_REV=$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock | cut -c1-7)
+          echo "nixpkgs_rev=$NIXPKGS_REV" >> $GITHUB_OUTPUT
+          echo "New nixpkgs revision: $NIXPKGS_REV"
+      
+      - name: Create Pull Request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): update Nix flake inputs"
+          title: "chore(deps): Update Nix flake inputs"
+          body: |
+            ## 🔄 Automated Nix Flake Input Update
+            
+            This PR updates the Nix flake inputs, primarily nixpkgs.
+            
+            ### Changes
+            - Updated nixpkgs to revision `${{ steps.version_info.outputs.nixpkgs_rev }}`
+            - Updated `flake.lock` file
+            
+            ### Testing
+            - ✅ Build test passed with updated inputs
+            
+            ### Review
+            Please review the changes in `flake.lock` and ensure the build works as expected.
+            
+            ---
+            *This PR was automatically created by the Update Flake Inputs workflow.*
+          branch: automated/update-flake-inputs
+          delete-branch: true
+          labels: |
+            dependencies
+            nix
+            automated
+          draft: false
+

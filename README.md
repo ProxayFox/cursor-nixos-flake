@@ -2,7 +2,15 @@
 
 A clean, simple NixOS flake for packaging the [Cursor](https://cursor.sh/) AI-powered code editor.
 
-## Auto checks for updates every day
+## 🔄 Automated Dependency Management
+
+This repository features comprehensive automated dependency management:
+
+- ✅ **Daily Cursor updates** - Automatically checks and updates Cursor versions
+- ✅ **Weekly Nix flake updates** - Updates nixpkgs and other inputs via PRs
+- ✅ **Weekly GitHub Actions updates** - Dependabot keeps CI/CD dependencies current
+
+See [DEPENDENCY-MANAGEMENT.md](DEPENDENCY-MANAGEMENT.md) for detailed information.
 
 ## 📦 What This Flake Provides
 
@@ -117,15 +125,21 @@ The script will automatically:
 
 ```text
 cursor-flake/
-├── flake.nix              # Main flake configuration (package-only)
-├── flake.lock             # Flake lock file
-├── update-cursor.sh       # Update script for new versions
-├── README.md              # This file
-├── LICENSE                # MIT License
-└── archive-old-system-configs/  # Archived old system configs
-    ├── configuration.nix  # (archived - was for full system setup)
-    ├── home.nix          # (archived - was for home-manager)
-    └── ...               # (other archived files)
+├── flake.nix                      # Main flake configuration (package-only)
+├── flake.lock                     # Flake lock file
+├── update-cursor.sh               # Update script for new versions
+├── README.md                      # This file
+├── LICENSE                        # MIT License
+├── DEPENDENCY-MANAGEMENT.md       # Dependency management documentation
+├── .github/
+│   ├── dependabot.yml            # Dependabot configuration
+│   └── workflows/
+│       ├── update-cursor.yml     # Daily Cursor update workflow
+│       └── update-flake-inputs.yml  # Weekly flake update workflow
+└── archive-old-system-configs/   # Archived old system configs
+    ├── configuration.nix          # (archived - was for full system setup)
+    ├── home.nix                  # (archived - was for home-manager)
+    └── ...                       # (other archived files)
 ```
 
 ## 🔧 Development

@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # Monitor GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "02:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    reviewers:
+      - "proxay"
+    # Group all GitHub Actions updates into a single PR
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Monitor Nix flake inputs
+  # Note: Dependabot doesn't natively support Nix flakes.
+  # Nix flake inputs (nixpkgs) are automatically updated via the
+  # 'update-flake-inputs.yml' workflow which runs weekly and creates PRs.
+  #
+  # Cursor version updates are handled by the 'update-cursor.yml' workflow
+  # which runs daily and automatically commits updates.
+  #
+  # Both workflows complement this Dependabot configuration to keep
+  # all dependencies up to date.
+  
+  # If you add Docker or other dependencies in the future,
+  # uncomment and configure as needed:
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   open-pull-requests-limit: 5
+  #   labels:
+  #     - "dependencies"
+  #     - "docker"
+

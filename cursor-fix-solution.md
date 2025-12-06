@@ -4,7 +4,7 @@
 
 The issue with Cursor when using the custom developed flake is related to native modules not being found when the AppImage runs. The error shows:
 
-```
+```text
 Error: Cannot find module './build/Debug/keymapping'
 Require stack:
 - /home/user/.cache/appimage-run/d249132fa6429cbc46050495a19ed410e04db53655428955024ff631c095d11c/usr/share/cursor/resources/app/node_modules/native-keymap/index.js
@@ -240,10 +240,13 @@ in
 1. Open your `home.nix` file
 2. Replace the existing `cursorAppImage` section with the updated version above
 3. Rebuild your system with:
+
    ```bash
    sudo nixos-rebuild switch --flake .#cursor-system
    ```
+
 4. Test Cursor:
+
    ```bash
    cursor --version
    ```
@@ -253,11 +256,13 @@ in
 If you still encounter issues:
 
 1. Clear the AppImage cache:
+
    ```bash
    rm -rf ~/.cache/appimage-run/*
    ```
 
 2. Try running Cursor with additional debugging:
+
    ```bash
    cursor --enable-logging --v=1
    ```
