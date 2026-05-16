@@ -106,9 +106,9 @@
       packages.${system} = {
         default = self.packages.${system}.cursor;
         cursor = buildCursor {
-          version = "3.4.17";
-          url = "https://downloads.cursor.com/production/93e603f703cd553a6bb3644711a3379bbbb3118f/linux/x64/Cursor-3.4.17-x86_64.AppImage";
-          sha256 = "1ivnsvsy3dnkjz1n7di8djry2w6vv9zwlpcfbjdq2w1g6wp2vvaa";
+          version = "3.4.20";
+          url = "https://downloads.cursor.com/production/0cf8b06883f54e26bb4f0fb8647c9500ccb4331f/linux/x64/Cursor-3.4.20-x86_64.AppImage";
+          sha256 = "0ba07bfa7j3kwfmrlbzp1sy7n4pxv9gjcw5hkxyqgmr7f1ynac52";
         };
       };
 
