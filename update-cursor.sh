@@ -148,7 +148,8 @@ if nix build .#cursor; then
     print_success "Build successful!"
     
     if [[ -x "./result/bin/cursor" ]]; then
-        BUILT_VERSION=$(./result/bin/cursor --version 2>/dev/null || echo "unknown")
+        # `cursor --version` prints three lines (version, commit, arch)
+        BUILT_VERSION=$(./result/bin/cursor --version 2>/dev/null | head -n1 || echo "unknown")
         print_info "Built version: $BUILT_VERSION"
         
         if [[ "$BUILT_VERSION" == "$NEW_VERSION" ]]; then

@@ -5,102 +5,36 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }: 
+  outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
-      
-      buildCursor = { version, url, sha256 }: 
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true; # code-cursor is unfree
+      };
+
+      # Reuse nixpkgs' code-cursor (buildVscode: autoPatchelfHook + wrapGAppsHook3) and
+      # only swap in the AppImage this flake tracks, so we stay ahead of nixpkgs on
+      # version without reimplementing the packaging.
+      #
+      # Deliberately NOT appimageTools.wrapType2: that is buildFHSEnv -> bubblewrap, and
+      # bwrap sets PR_SET_NO_NEW_PRIVS=1, which every child process inherits. That breaks
+      # setuid binaries (sudo) in Cursor's integrated terminal.
+      buildCursor = { version, url, sha256 }:
         let
-          src = pkgs.fetchurl { inherit url sha256; };
-          
-          # Extract the AppImage to get access to the icon and desktop file
-          appimageContents = pkgs.appimageTools.extract {
-            inherit version src;
-            pname = "cursor";
-          };
-          
-          unwrapped = pkgs.appimageTools.wrapType2 {
-            pname = "cursor";
-            inherit version src;
-            
-            extraPkgs = p: with p; [
-              glib gtk3 cairo pango atk gdk-pixbuf
-              xorg.libX11 xorg.libXcomposite xorg.libXcursor
-              xorg.libXext xorg.libXfixes xorg.libXi
-              xorg.libXrandr xorg.libXrender xorg.libXtst
-              nss nspr dbus at-spi2-atk at-spi2-core
-              mesa alsa-lib fuse libxkbcommon xorg.libxkbfile
-            ];
-          };
+          appimage = pkgs.fetchurl { inherit url sha256; };
         in
-        pkgs.stdenv.mkDerivation {
-          pname = "cursor";
+        pkgs.code-cursor.overrideAttrs (old: {
           inherit version;
-          
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-          
-          unpackPhase = "true";
-          
-          installPhase = ''
-            mkdir -p $out/bin $out/share/applications $out/share/icons/hicolor/scalable/apps $out/share/icons/hicolor/256x256/apps $out/share/pixmaps
-            
-            # Create version-aware wrapper script
-            cat > $out/bin/cursor << EOF
-            #!/usr/bin/env bash
-            if [[ "\$1" == "--version" || "\$1" == "-v" ]]; then
-              echo "${version}"
-              exit 0
-            fi
-            export CURSOR_DISABLE_UPDATE="1"
-            export CURSOR_SKIP_UPDATE_CHECK="1"
-            export XDG_CACHE_HOME="\$(mktemp -d -t cursor-xdg-cache-XXXXXX)"
-            export CURSOR_CACHE_DIR="\$(mktemp -d -t cursor-cache-XXXXXX)"
-            exec "${unwrapped}/bin/cursor" "\$@"
-            EOF
-            chmod +x $out/bin/cursor
-            
-            # Extract and install icon (try multiple possible locations and formats)
-            if [ -f "${appimageContents}/cursor.png" ]; then
-              cp "${appimageContents}/cursor.png" $out/share/pixmaps/cursor.png
-              cp "${appimageContents}/cursor.png" $out/share/icons/hicolor/256x256/apps/cursor.png
-            elif [ -f "${appimageContents}/Cursor.png" ]; then
-              cp "${appimageContents}/Cursor.png" $out/share/pixmaps/cursor.png
-              cp "${appimageContents}/Cursor.png" $out/share/icons/hicolor/256x256/apps/cursor.png
-            elif [ -f "${appimageContents}/usr/share/pixmaps/cursor.png" ]; then
-              cp "${appimageContents}/usr/share/pixmaps/cursor.png" $out/share/pixmaps/cursor.png
-              cp "${appimageContents}/usr/share/pixmaps/cursor.png" $out/share/icons/hicolor/256x256/apps/cursor.png
-            elif [ -f "${appimageContents}/usr/share/icons/hicolor/256x256/apps/cursor.png" ]; then
-              cp "${appimageContents}/usr/share/icons/hicolor/256x256/apps/cursor.png" $out/share/pixmaps/cursor.png
-              cp "${appimageContents}/usr/share/icons/hicolor/256x256/apps/cursor.png" $out/share/icons/hicolor/256x256/apps/cursor.png
-            fi
-            
-            # Try SVG icon as well
-            if [ -f "${appimageContents}/cursor.svg" ]; then
-              cp "${appimageContents}/cursor.svg" $out/share/icons/hicolor/scalable/apps/cursor.svg
-            elif [ -f "${appimageContents}/Cursor.svg" ]; then
-              cp "${appimageContents}/Cursor.svg" $out/share/icons/hicolor/scalable/apps/cursor.svg
-            elif [ -f "${appimageContents}/usr/share/icons/hicolor/scalable/apps/cursor.svg" ]; then
-              cp "${appimageContents}/usr/share/icons/hicolor/scalable/apps/cursor.svg" $out/share/icons/hicolor/scalable/apps/cursor.svg
-            fi
-            
-            # Create desktop entry
-            cat > $out/share/applications/cursor.desktop << EOF
-            [Desktop Entry]
-            Name=Cursor
-            Comment=AI-powered code editor
-            GenericName=Text Editor
-            Exec=$out/bin/cursor %F
-            Icon=cursor
-            Type=Application
-            StartupNotify=true
-            MimeType=text/plain;text/x-chdr;text/x-csrc;text/x-c++hdr;text/x-c++src;text/x-java;text/x-dsrc;text/x-pascal;text/x-perl;text/x-python;application/x-php;application/x-httpd-php3;application/x-httpd-php4;application/x-httpd-php5;application/javascript;application/json;text/x-markdown;text/x-web-markdown;text/html;text/css;text/x-sql;text/x-diff;
-            Categories=Development;IDE;
-            Keywords=editor;development;programming;ide;
-            StartupWMClass=Cursor
-            EOF
-          '';
-        };
+
+          src = pkgs.appimageTools.extract {
+            pname = "cursor";
+            inherit version;
+            src = appimage;
+          };
+
+          sourceRoot = "cursor-${version}-extracted/usr/share/cursor";
+        });
     in
     {
       packages.${system} = {
