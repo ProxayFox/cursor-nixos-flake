@@ -40,9 +40,9 @@
       packages.${system} = {
         default = self.packages.${system}.cursor;
         cursor = buildCursor {
-          version = "3.21.13";
-          url = "https://downloads.cursor.com/production/e44a49c17e334d442e58bbde931d791200f014a2/linux/x64/Cursor-3.21.13-x86_64.AppImage";
-          sha256 = "0nz2mm2cn8x790908d1jyjndsdw3skwmydn95qr49704vqwalpi8";
+          version = "3.21.16";
+          url = "https://downloads.cursor.com/production/8ae78e8eee1e63479c7e0504b664bc0a80c6800f/linux/x64/Cursor-3.21.16-x86_64.AppImage";
+          sha256 = "1l5vmbml3cmcnkvr1w631ivf2wizyd1dg34cp7zxqay0rnp14axq";
         };
       };
 
